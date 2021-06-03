@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 import re
 import copy
-from datetime import datetime, timedelta
+import datetime
 import matplotlib.pyplot as plot
 import matplotlib.dates as md
 
@@ -45,8 +45,8 @@ class CreateDataset:
         dataset = pd.read_csv(self.base_dir / file, skipinitialspace=True)
 
         # Convert timestamps to dates
-        dataset[timestamp_col] = pd.to_datetime(dataset[timestamp_col])
-
+        dataset[timestamp_col] = dataset[timestamp_col].apply(lambda x: datetime.timedelta(seconds=int(x)) + pd.Timestamp.now())
+        # dataset[timestamp_col] = pd.to_datetime(dataset[timestamp_col])
         # Create a table based on the times found in the dataset
         if self.data_table is None:
             self.create_dataset(min(dataset[timestamp_col]), max(dataset[timestamp_col]), value_cols, prefix)
@@ -60,7 +60,7 @@ class CreateDataset:
             relevant_rows = dataset[
                 (dataset[timestamp_col] >= self.data_table.index[i]) &
                 (dataset[timestamp_col] < (self.data_table.index[i] +
-                                           timedelta(milliseconds=self.granularity)))
+                                           datetime.timedelta(milliseconds=self.granularity)))
             ]
             for col in value_cols:
                 # Take the average value
@@ -102,10 +102,10 @@ class CreateDataset:
             start = dataset[start_timestamp_col][i]
             end = dataset[end_timestamp_col][i]
             value = dataset[value_col][i]
-            border = (start - timedelta(milliseconds=self.granularity))
+            border = (start - datetime.timedelta(milliseconds=self.granularity))
 
             # get the right rows from our data table
-            relevant_rows = self.data_table[(start <= (self.data_table.index +timedelta(milliseconds=self.granularity))) & (end > self.data_table.index)]
+            relevant_rows = self.data_table[(start <= (self.data_table.index + datetime.timedelta(milliseconds=self.granularity))) & (end > self.data_table.index)]
 
             # and add 1 to the rows if we take the sum
             if aggregation == 'sum':
